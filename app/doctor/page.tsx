@@ -18,6 +18,7 @@ export default function DoctorPage() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [adherence, setAdherence] = useState<AdherenceRow[]>([]);
 
+  const [loggedIn, setLoggedIn] = useState(false);
   const [practiceId, setPracticeId] = useState("");
   const [providerId, setProviderId] = useState("");
   const [patientId, setPatientId] = useState("");
@@ -94,41 +95,91 @@ export default function DoctorPage() {
     setSubmitting(false);
   }
 
+  const loggedInProvider = providers.find(p => p.id === providerId);
+
+  if (!loggedIn) {
+    return (
+      <div className="flex flex-col min-h-full">
+        <nav className="border-b border-warm-200 bg-white">
+          <div className="max-w-6xl mx-auto px-6 h-16 flex items-center">
+            <Link href="/" className="flex items-center gap-2">
+              <span className="text-xl font-bold tracking-tight text-warm-700">Schedule</span>
+              <svg width="18" height="16" viewBox="0 0 24 22" fill="none">
+                <defs><linearGradient id="hg" x1="0" y1="0" x2="24" y2="22" gradientUnits="userSpaceOnUse">
+                  <stop offset="0" stopColor="#ab65ba" /><stop offset="0.5" stopColor="#b2cfee" /><stop offset="1" stopColor="#ee0d63" />
+                </linearGradient></defs>
+                <path d="M12 21C12 21 1 14.1 1 7.3C1 3.8 3.7 1.5 6.8 1.5C9 1.5 10.9 2.8 12 4.8C13.1 2.8 15 1.5 17.2 1.5C20.3 1.5 23 3.8 23 7.3C23 14.1 12 21 12 21Z" fill="url(#hg)" />
+              </svg>
+              <span className="text-xl font-bold tracking-tight text-pink">Hub</span>
+            </Link>
+          </div>
+        </nav>
+
+        <main className="flex flex-1 items-center justify-center p-6">
+          <div className="w-full max-w-sm space-y-6">
+            <div className="text-center space-y-2">
+              <div className="text-3xl">🩺</div>
+              <h1 className="text-2xl font-bold text-warm-900">Doctor Sign In</h1>
+              <p className="text-sm text-warm-500">Select your practice and name to continue.</p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-warm-700 mb-1">Practice</label>
+                <select value={practiceId} onChange={e => setPracticeId(e.target.value)}
+                  className="w-full border border-warm-300 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky focus:border-transparent">
+                  <option value="">Select your practice...</option>
+                  {practices.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-warm-700 mb-1">Provider</label>
+                <select value={providerId} onChange={e => setProviderId(e.target.value)}
+                  className="w-full border border-warm-300 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky focus:border-transparent"
+                  disabled={!practiceId}>
+                  <option value="">Select your name...</option>
+                  {providers.map(p => (
+                    <option key={p.id} value={p.id}>Dr. {p.last_name} ({p.specialty})</option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                onClick={() => setLoggedIn(true)}
+                disabled={!practiceId || !providerId}
+                className="w-full py-2.5 bg-sky text-warm-800 rounded-xl font-semibold text-sm hover:bg-sky-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Continue
+              </button>
+            </div>
+
+            <p className="text-center text-xs text-warm-400">
+              Demo mode. In production, this uses passwordless email login.
+            </p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <main className="max-w-4xl mx-auto p-6 space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <Link href="/" className="text-sm text-warm-400 hover:text-warm-600">&larr; ScheduleHub</Link>
           <h1 className="text-2xl font-bold mt-1 text-warm-900">Doctor Portal</h1>
-          <p className="text-sm text-warm-500">Create a PT referral order. The system will call the patient immediately.</p>
+          <p className="text-sm text-warm-500">
+            Signed in as <span className="font-medium text-warm-700">Dr. {loggedInProvider?.last_name}</span>
+            {" "}&middot;{" "}
+            <button onClick={() => setLoggedIn(false)} className="text-pink hover:text-pink-dark">Sign out</button>
+          </p>
         </div>
       </div>
 
       {/* Order form */}
       <div className="bg-white rounded-xl border border-warm-200 shadow-sm p-6 space-y-5">
         <h2 className="font-semibold text-lg">New PT Order</h2>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-warm-700 mb-1">Practice</label>
-            <select value={practiceId} onChange={e => setPracticeId(e.target.value)}
-              className="w-full border rounded-xl px-3 py-2 text-sm">
-              <option value="">Select practice...</option>
-              {practices.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-warm-700 mb-1">Ordering Provider</label>
-            <select value={providerId} onChange={e => setProviderId(e.target.value)}
-              className="w-full border rounded-xl px-3 py-2 text-sm" disabled={!practiceId}>
-              <option value="">Select provider...</option>
-              {providers.map(p => (
-                <option key={p.id} value={p.id}>Dr. {p.last_name} ({p.specialty})</option>
-              ))}
-            </select>
-          </div>
-        </div>
 
         <div>
           <label className="block text-sm font-medium text-warm-700 mb-1">Patient</label>
