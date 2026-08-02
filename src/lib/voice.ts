@@ -57,11 +57,15 @@ export async function callPatient(opts: {
     return { stubbed: true };
   }
 
+  // Normalize phone to E.164
+  const digits = opts.phone.replace(/\D/g, "");
+  const toNumber = digits.length === 10 ? `+1${digits}` : digits.startsWith("1") ? `+${digits}` : `+${digits}`;
+
   // Place outbound call via ElevenLabs Conversational AI telephony
   const result = await client.conversationalAi.twilio.outboundCall({
     agentId: AGENT_ID,
     agentPhoneNumberId: PHONE_NUMBER_ID,
-    toNumber: opts.phone,
+    toNumber,
     conversationInitiationClientData: {
       conversationConfigOverride: {
         agent: {

@@ -81,14 +81,26 @@ export function PatientTimeline({ patientId }: { patientId: string }) {
     }).catch(e => { setError(String(e)); setLoading(false); });
   }
 
+  const [callError, setCallError] = useState<string | null>(null);
+
   async function requestCall() {
     setRequestingCall(true);
-    await fetch("/api/patient-request-call", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ patient_id: patientId }),
-    });
-    setCallRequested(true);
+    setCallError(null);
+    try {
+      const res = await fetch("/api/patient-request-call", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ patient_id: patientId }),
+      });
+      if (res.ok) {
+        setCallRequested(true);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setCallError(data.error || `Error ${res.status}`);
+      }
+    } catch (e) {
+      setCallError(String(e));
+    }
     setRequestingCall(false);
   }
 
@@ -210,6 +222,7 @@ export function PatientTimeline({ patientId }: { patientId: string }) {
                   {!callRequested ? (
                     <button onClick={requestCall} disabled={requestingCall} className="px-4 py-2 border border-warm-300 rounded-xl text-sm text-warm-600 hover:bg-warm-50 transition-colors">{requestingCall ? "Calling you now..." : "Call Me Now"}</button>
                   ) : <span className="text-xs text-olive-dark self-center">Calling you now!</span>}
+                  {callError && <p className="text-xs text-pink mt-1">{callError}</p>}
                 </div>
               </div>
             )}

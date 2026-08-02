@@ -52,29 +52,38 @@ export async function POST(req: Request) {
 
   await auditLog("patient", "call_requested_immediate", "patients", patient_id);
 
-  // Place the call immediately via ElevenLabs
+  // Normalize phone to E.164
+  const rawPhone = (patient.phone as string).replace(/\D/g, "");
+  const e164Phone = rawPhone.length === 10 ? `+1${rawPhone}` : rawPhone.startsWith("1") ? `+${rawPhone}` : `+${rawPhone}`;
+
   const firstMessage = buildFirstMessage({
     patientFirstName: patient.first_name as string,
     doctorName, practiceName, serviceName, language: lang,
   });
 
-  await callPatient({
-    patientId: patient_id,
-    orderId,
-    phone: patient.phone as string,
-    purpose: "intake_availability",
-    firstMessage,
-    language: lang,
-    dynamicVariables: buildDynamicVars({
+  try {
+    await callPatient({
       patientId: patient_id,
-      patientName: `${patient.first_name} ${patient.last_name}`,
-      patientPhone: patient.phone as string,
       orderId,
-      doctorName, practiceName, serviceName,
-      frequency: `${order.frequency_per_week} times per week`,
-      duration: order.duration_weeks ? `${order.duration_weeks} weeks` : "as prescribed",
-    }),
-  });
+      phone: e164Phone,
+      purpose: "intake_availability",
+      firstMessage,
+      language: lang,
+      dynamicVariables: buildDynamicVars({
+        patientId: patient_id,
+        patientName: `${patient.first_name} ${patient.last_name}`,
+        patientPhone: e164Phone,
+        orderId,
+        doctorName, practiceName, serviceName,
+        frequency: `${order.frequency_per_week} times per week`,
+        duration: order.duration_weeks ? `${order.duration_weeks} weeks` : "as prescribed",
+      }),
+    });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("ElevenLabs call failed:", msg);
+    return NextResponse.json({ error: `Call failed: ${msg}` }, { status: 500 });
+  }
 
   // Update order status
   await sql`
