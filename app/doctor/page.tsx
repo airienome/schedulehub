@@ -18,6 +18,21 @@ type AdherenceRow = {
   visits_expected: number; completed: number; no_shows: number;
   adherence_pct: number; risk: string; order_id: string;
 };
+type OutreachMsg = {
+  id: string; channel: string; direction: string; purpose: string;
+  body: string; sent_at: string; responded: boolean;
+  ai_extraction: Record<string, unknown> | null;
+};
+type PatientOrder = {
+  id: string; status: string; frequency_per_week: number; duration_weeks: number;
+  total_visits_ordered: number; urgency: string; clinical_notes: string;
+  diagnosis_codes: string[]; created_at: string; service_name: string;
+};
+type PatientAppt = {
+  id: string; order_id: string; visit_number: number; status: string;
+  status_source: string; scheduled_start: string; is_home_visit: boolean;
+  center_name: string; center_phone: string;
+};
 
 const PRACTICE_ID = "b0000000-0000-0000-0000-000000000001";
 const PROVIDER_ID = "d0000000-0000-0000-0000-000000000001";
@@ -98,7 +113,33 @@ export default function DoctorPage() {
     setSavingEdit(false);
   }
 
+  // Patient detail panel state
+  const [detailPatient, setDetailPatient] = useState<Patient | null>(null);
+  const [detailOutreach, setDetailOutreach] = useState<OutreachMsg[]>([]);
+  const [detailOrders, setDetailOrders] = useState<PatientOrder[]>([]);
+  const [detailAppts, setDetailAppts] = useState<PatientAppt[]>([]);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailTab, setDetailTab] = useState<"activity" | "edit">("activity");
+
+  async function openPatientDetail(p: Patient) {
+    setDetailPatient(p);
+    setDetailLoading(true);
+    setDetailTab("activity");
+    setEditForm({
+      first_name: p.first_name, last_name: p.last_name, dob: p.dob, phone: p.phone,
+      preferred_language: p.preferred_language, address_line1: p.address_line1 || "",
+      city: p.city || "", state: p.state || "", zip: p.zip || "", home_visit_ok: p.home_visit_ok,
+    });
+    const res = await fetch(`/api/patient-detail?id=${p.id}`);
+    const data = await res.json();
+    setDetailOutreach(data.outreach || []);
+    setDetailOrders(data.orders || []);
+    setDetailAppts(data.appointments || []);
+    setDetailLoading(false);
+  }
+
   function selectAndPrescribe(p: Patient) {
+    setDetailPatient(null);
     setSelectedPatient(p);
     setTab("prescribe");
     setResult(null);
@@ -247,9 +288,9 @@ export default function DoctorPage() {
                 </thead>
                 <tbody>
                   {patients.map(p => (
-                    <tr key={p.id} className="border-b border-warm-100 last:border-0 hover:bg-blush/30 transition-colors">
+                    <tr key={p.id} className="border-b border-warm-100 last:border-0 hover:bg-blush/30 transition-colors cursor-pointer" onClick={() => openPatientDetail(p)}>
                       <td className="p-4">
-                        <div className="font-medium text-warm-900">{p.first_name} {p.last_name}</div>
+                        <div className="font-medium text-warm-900 hover:text-pink">{p.first_name} {p.last_name}</div>
                         <div className="text-xs text-warm-400">
                           DOB: {p.dob} &middot; {p.preferred_language.toUpperCase()}
                         </div>
@@ -278,17 +319,11 @@ export default function DoctorPage() {
                           <span className="text-xs text-warm-400">No</span>
                         )}
                       </td>
-                      <td className="p-4">
-                        <div className="flex gap-1.5">
-                          <button onClick={() => startEdit(p)}
-                            className="px-3 py-1.5 border border-warm-300 rounded-lg text-xs font-medium text-warm-600 hover:bg-warm-50 transition-colors">
-                            Edit
-                          </button>
-                          <button onClick={() => selectAndPrescribe(p)}
-                            className="px-3 py-1.5 bg-sky text-warm-800 rounded-lg text-xs font-medium hover:bg-sky-dark transition-colors">
-                            Prescribe PT
-                          </button>
-                        </div>
+                      <td className="p-4" onClick={e => e.stopPropagation()}>
+                        <button onClick={() => selectAndPrescribe(p)}
+                          className="px-3 py-1.5 bg-sky text-warm-800 rounded-lg text-xs font-medium hover:bg-sky-dark transition-colors">
+                          Prescribe PT
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -297,79 +332,181 @@ export default function DoctorPage() {
             </div>
           </div>
 
-          {/* Edit patient modal */}
-          {editingPatient && (
-            <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-2xl shadow-lg w-full max-w-lg p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-lg text-warm-900">Edit Patient</h3>
-                  <button onClick={() => setEditingPatient(null)} className="text-warm-400 hover:text-warm-600 text-xl">&times;</button>
+          </div>
+        )}
+
+      {/* Patient detail panel */}
+      {detailPatient && (
+        <div className="fixed inset-0 bg-black/30 flex justify-end z-50" onClick={() => setDetailPatient(null)}>
+          <div className="bg-white w-full max-w-xl h-full overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-warm-200 px-5 py-4 flex items-center justify-between z-10">
+              <div>
+                <h2 className="font-bold text-lg text-warm-900">{detailPatient.first_name} {detailPatient.last_name}</h2>
+                <p className="text-xs text-warm-500">{detailPatient.phone} &middot; {detailPatient.preferred_language.toUpperCase()}</p>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => selectAndPrescribe(detailPatient)}
+                  className="px-3 py-1.5 bg-sky text-warm-800 rounded-lg text-xs font-semibold hover:bg-sky-dark">Prescribe PT</button>
+                <button onClick={() => setDetailPatient(null)} className="text-warm-400 hover:text-warm-600 text-xl px-2">&times;</button>
+              </div>
+            </div>
+
+            {/* Tabs: Activity / Edit */}
+            <div className="flex gap-1 bg-warm-100 mx-5 mt-4 rounded-xl p-1">
+              <button onClick={() => setDetailTab("activity")} className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${detailTab === "activity" ? "bg-white shadow-sm text-warm-900" : "text-warm-500"}`}>Activity</button>
+              <button onClick={() => setDetailTab("edit")} className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${detailTab === "edit" ? "bg-white shadow-sm text-warm-900" : "text-warm-500"}`}>Edit Info</button>
+            </div>
+
+            {detailLoading ? (
+              <div className="text-center py-12 text-warm-400">Loading...</div>
+            ) : detailTab === "activity" ? (
+              <div className="p-5 space-y-5">
+                {/* Patient info summary */}
+                <div className="bg-warm-50 rounded-xl p-3 text-xs text-warm-600 space-y-1">
+                  <div>{detailPatient.address_line1}, {detailPatient.city}, {detailPatient.state} {detailPatient.zip}</div>
+                  <div>{detailPatient.payer_name} - {detailPatient.plan_name} ({detailPatient.eligibility_status})</div>
+                  {detailPatient.home_visit_ok && <div className="text-sky-dark font-medium">Home/mobile therapy eligible</div>}
+                  {detailPatient.mobility_notes && <div className="italic">{detailPatient.mobility_notes}</div>}
                 </div>
+
+                {/* Orders/Prescriptions */}
+                {detailOrders.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-warm-900 mb-2">Prescriptions</h3>
+                    {detailOrders.map(o => (
+                      <div key={o.id} className="border border-warm-200 rounded-xl p-3 mb-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-sm text-warm-900">{o.service_name}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${o.status === "in_progress" ? "bg-olive/20 text-olive-dark" : o.status === "scheduled" ? "bg-sky/30 text-warm-800" : o.status === "contacting_patient" ? "bg-lavender/15 text-lavender" : "bg-warm-100 text-warm-500"}`}>{o.status.replace(/_/g, " ")}</span>
+                        </div>
+                        <div className="text-xs text-warm-500 mt-1">{o.frequency_per_week}x/wk for {o.duration_weeks}wk &middot; {o.total_visits_ordered} visits{o.urgency !== "routine" && <span className="text-pink ml-1">({o.urgency})</span>}</div>
+                        {o.clinical_notes && <div className="text-xs text-warm-400 mt-1 italic">{o.clinical_notes}</div>}
+                        {o.diagnosis_codes?.length > 0 && <div className="text-xs text-warm-400 mt-1">ICD: {o.diagnosis_codes.join(", ")}</div>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Appointments */}
+                {detailAppts.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-warm-900 mb-2">Appointments</h3>
+                    <div className="space-y-1.5">
+                      {detailAppts.map(a => (
+                        <div key={a.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-warm-50">
+                          <div>
+                            <div className="text-sm text-warm-800">Visit #{a.visit_number} - {a.center_name}</div>
+                            <div className="text-xs text-warm-500">
+                              {new Date(a.scheduled_start).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })} at {new Date(a.scheduled_start).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                              {a.is_home_visit && " (Home)"}
+                            </div>
+                          </div>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                            a.status === "completed" ? "bg-olive/20 text-olive-dark" :
+                            a.status === "confirmed" ? "bg-sky/30 text-warm-800" :
+                            a.status === "no_show" ? "bg-peach/30 text-pink" :
+                            a.status === "scheduled" ? "bg-lavender/15 text-lavender" :
+                            "bg-warm-100 text-warm-500"
+                          }`}>{a.status.replace(/_/g, " ")}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Outreach / communication log */}
+                {detailOutreach.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-warm-900 mb-2">Communication Log</h3>
+                    <div className="space-y-2">
+                      {detailOutreach.map(msg => (
+                        <div key={msg.id} className={`rounded-xl p-3 text-xs ${msg.direction === "inbound" ? "bg-sky/15 border border-sky/30 ml-6" : "bg-warm-50 border border-warm-200 mr-6"}`}>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${msg.channel === "voice" ? "bg-lavender/15 text-lavender" : "bg-sky/30 text-warm-800"}`}>{msg.channel}</span>
+                            <span className="text-warm-400">{msg.direction === "outbound" ? "Sent" : "Received"}</span>
+                            <span className="text-warm-300">{new Date(msg.sent_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>
+                            {msg.direction === "outbound" && (
+                              <span className={`ml-auto text-[10px] font-medium ${msg.responded ? "text-olive-dark" : "text-warm-400"}`}>{msg.responded ? "Replied" : "No reply"}</span>
+                            )}
+                          </div>
+                          <div className="text-warm-700">{msg.body}</div>
+                          {msg.ai_extraction && (
+                            <details className="mt-1.5">
+                              <summary className="text-warm-400 cursor-pointer">AI extraction</summary>
+                              <pre className="text-[10px] text-warm-500 mt-1 whitespace-pre-wrap">{JSON.stringify(msg.ai_extraction, null, 2)}</pre>
+                            </details>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {detailOrders.length === 0 && detailOutreach.length === 0 && (
+                  <div className="text-center py-8 text-warm-400 text-sm">No activity yet for this patient.</div>
+                )}
+              </div>
+            ) : (
+              /* Edit tab */
+              <div className="p-5 space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-warm-500 mb-1">First name</label>
-                    <input value={editForm.first_name} onChange={e => setEditForm({ ...editForm, first_name: e.target.value })}
-                      className="w-full border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                    <input value={editForm.first_name} onChange={e => setEditForm({ ...editForm, first_name: e.target.value })} className="w-full border border-warm-300 rounded-xl px-3 py-2 text-sm" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-warm-500 mb-1">Last name</label>
-                    <input value={editForm.last_name} onChange={e => setEditForm({ ...editForm, last_name: e.target.value })}
-                      className="w-full border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                    <input value={editForm.last_name} onChange={e => setEditForm({ ...editForm, last_name: e.target.value })} className="w-full border border-warm-300 rounded-xl px-3 py-2 text-sm" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-warm-500 mb-1">DOB</label>
-                    <input type="date" value={editForm.dob} onChange={e => setEditForm({ ...editForm, dob: e.target.value })}
-                      className="w-full border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                    <input type="date" value={editForm.dob} onChange={e => setEditForm({ ...editForm, dob: e.target.value })} className="w-full border border-warm-300 rounded-xl px-3 py-2 text-sm" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-warm-500 mb-1">Phone</label>
-                    <input value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value })}
-                      className="w-full border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                    <input value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} className="w-full border border-warm-300 rounded-xl px-3 py-2 text-sm" />
                   </div>
                   <div className="col-span-2">
                     <label className="block text-xs font-medium text-warm-500 mb-1">Address</label>
-                    <input value={editForm.address_line1} onChange={e => setEditForm({ ...editForm, address_line1: e.target.value })}
-                      className="w-full border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                    <input value={editForm.address_line1} onChange={e => setEditForm({ ...editForm, address_line1: e.target.value })} className="w-full border border-warm-300 rounded-xl px-3 py-2 text-sm" />
                   </div>
-                  <input placeholder="City" value={editForm.city} onChange={e => setEditForm({ ...editForm, city: e.target.value })}
-                    className="border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                  <input placeholder="City" value={editForm.city} onChange={e => setEditForm({ ...editForm, city: e.target.value })} className="border border-warm-300 rounded-xl px-3 py-2 text-sm" />
                   <div className="flex gap-2">
-                    <input placeholder="State" value={editForm.state} onChange={e => setEditForm({ ...editForm, state: e.target.value })}
-                      className="w-20 border border-warm-300 rounded-xl px-3 py-2 text-sm" />
-                    <input placeholder="ZIP" value={editForm.zip} onChange={e => setEditForm({ ...editForm, zip: e.target.value })}
-                      className="flex-1 border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                    <input placeholder="State" value={editForm.state} onChange={e => setEditForm({ ...editForm, state: e.target.value })} className="w-20 border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                    <input placeholder="ZIP" value={editForm.zip} onChange={e => setEditForm({ ...editForm, zip: e.target.value })} className="flex-1 border border-warm-300 rounded-xl px-3 py-2 text-sm" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-warm-500 mb-1">Language</label>
-                    <select value={editForm.preferred_language} onChange={e => setEditForm({ ...editForm, preferred_language: e.target.value })}
-                      className="w-full border border-warm-300 rounded-xl px-3 py-2 text-sm">
+                    <select value={editForm.preferred_language} onChange={e => setEditForm({ ...editForm, preferred_language: e.target.value })} className="w-full border border-warm-300 rounded-xl px-3 py-2 text-sm">
                       <option value="en">English</option>
                       <option value="es">Spanish</option>
                       <option value="ht">Haitian Creole</option>
                     </select>
                   </div>
                   <div className="flex items-center gap-2 pt-5">
-                    <input type="checkbox" id="homeOk" checked={editForm.home_visit_ok}
-                      onChange={e => setEditForm({ ...editForm, home_visit_ok: e.target.checked })}
-                      className="rounded" />
-                    <label htmlFor="homeOk" className="text-sm text-warm-700">Home/mobile therapy OK</label>
+                    <input type="checkbox" id="homeOk2" checked={editForm.home_visit_ok} onChange={e => setEditForm({ ...editForm, home_visit_ok: e.target.checked })} className="rounded" />
+                    <label htmlFor="homeOk2" className="text-sm text-warm-700">Home/mobile therapy OK</label>
                   </div>
                 </div>
                 <div className="flex gap-2 pt-2">
-                  <button onClick={saveEdit} disabled={savingEdit}
+                  <button onClick={async () => {
+                    if (!detailPatient) return;
+                    setSavingEdit(true);
+                    await fetch("/api/patients", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: detailPatient.id, ...editForm }) });
+                    const updated = await fetch("/api/patients").then(r => r.json());
+                    if (Array.isArray(updated)) setPatients(updated);
+                    setSavingEdit(false);
+                    setDetailPatient(null);
+                  }} disabled={savingEdit}
                     className="px-5 py-2 bg-sky text-warm-800 rounded-xl text-sm font-semibold hover:bg-sky-dark disabled:opacity-50 transition-colors">
                     {savingEdit ? "Saving..." : "Save Changes"}
                   </button>
-                  <button onClick={() => setEditingPatient(null)}
-                    className="px-5 py-2 border border-warm-300 rounded-xl text-sm text-warm-500 hover:bg-warm-50 transition-colors">
-                    Cancel
-                  </button>
                 </div>
               </div>
-            </div>
-          )}
+            )}
           </div>
-        )}
+        </div>
+      )}
 
         {/* Prescription form */}
         {tab === "prescribe" && (
