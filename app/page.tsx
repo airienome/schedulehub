@@ -21,11 +21,7 @@ export default function Home() {
       {/* Nav */}
       <nav className="border-b border-warm-200 bg-white">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="text-2xl font-bold tracking-tight text-warm-700">Therapy</span>
-            <HeartIcon />
-            <span className="text-2xl font-bold tracking-tight text-pink">Flow</span>
-          </div>
+          <img src="/logo.png" alt="TherapyFlow" className="h-8" />
           <div className="flex items-center gap-4">
             <Link href="/login" className="text-sm font-semibold text-warm-600 hover:text-warm-900">
               Provider Login
@@ -239,10 +235,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-warm-200 bg-white py-8 px-6">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-warm-600">TherapyFlow 305</span>
-            <HeartIcon className="w-4 h-4" />
-          </div>
+          <img src="/logo.png" alt="TherapyFlow 305" className="h-5" />
           <div className="flex gap-6 text-sm text-warm-400">
             <Link href="/login" className="hover:text-warm-600">Provider Login</Link>
             <Link href="/centers" className="hover:text-warm-600">PT Centers</Link>

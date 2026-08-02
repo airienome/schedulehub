@@ -1,6 +1,7 @@
 import { sql } from "@/lib/db";
 import { auditLog } from "@/lib/audit";
 import { sendSms } from "@/lib/sms";
+import { buildPatientUrl } from "@/lib/patient-token";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
@@ -121,11 +122,16 @@ export async function POST(req: Request) {
       ? (services[0].name as string)
       : "physical therapy";
 
-    // Step 1: Text the patient asking for consent to call
+    // Build patient portal link (use request origin for correct domain)
+    const origin = req.headers.get("origin") || req.headers.get("host") || "therapyflow305.vercel.app";
+    const baseUrl = origin.startsWith("http") ? origin : `https://${origin}`;
+    const patientLink = buildPatientUrl(patient_id, baseUrl);
+
+    // Step 1: Text the patient asking for consent to call, include portal link
     const smsBody =
       lang === "es"
-        ? `Hola ${patient.first_name}, le escribimos de parte de ${providerName} en ${practiceName}. El doctor le ha referido para ${serviceName}. Podemos coordinar sus citas? Responda SI para una llamada o TEXTO para programar por mensaje.`
-        : `Hi ${patient.first_name}, this is TherapyFlow on behalf of ${providerName} at ${practiceName}. The doctor has referred you for ${serviceName}. Reply YES for a scheduling call, or TEXT to schedule by message.`;
+        ? `Hola ${patient.first_name}, le escribimos de parte de ${providerName} en ${practiceName}. El doctor le ha referido para ${serviceName}. Responda SI para una llamada o TEXTO para programar por mensaje.\n\nVea su prescripcion: ${patientLink}`
+        : `Hi ${patient.first_name}, this is TherapyFlow on behalf of ${providerName} at ${practiceName}. The doctor has referred you for ${serviceName}. Reply YES for a scheduling call, or TEXT to schedule by message.\n\nView your prescription: ${patientLink}`;
 
     // Update order status
     await sql`
