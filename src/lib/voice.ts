@@ -7,7 +7,22 @@ const client = new ElevenLabsClient({
 });
 
 const AGENT_ID = process.env.ELEVENLABS_AGENT_ID!;
-const PHONE_NUMBER_ID = process.env.ELEVENLABS_PHONE_NUMBER_ID!;
+const RAW_PHONE_ID = process.env.ELEVENLABS_PHONE_NUMBER_ID || "";
+// Accept either phnum_xxx or fall back to looking it up
+const PHONE_NUMBER_ID = RAW_PHONE_ID.startsWith("phnum_") ? RAW_PHONE_ID : "";
+
+async function getPhoneNumberId(): Promise<string> {
+  if (PHONE_NUMBER_ID) return PHONE_NUMBER_ID;
+  // If env var is a phone number or missing, look up via API
+  try {
+    const nums = await client.conversationalAi.phoneNumbers.list();
+    const match = Array.isArray(nums) ? nums.find((n: Record<string, unknown>) =>
+      n.assignedAgent && (n.assignedAgent as Record<string, unknown>).agentId === AGENT_ID
+    ) : null;
+    if (match) return (match as Record<string, unknown>).phoneNumberId as string;
+  } catch { /* fall through */ }
+  return RAW_PHONE_ID; // last resort: use whatever was configured
+}
 
 type CallPurpose =
   | "intake_address"
@@ -35,7 +50,9 @@ export async function callPatient(opts: {
   dynamicVariables?: Record<string, string>;
   language?: string;
 }) {
-  if (!AGENT_ID || !PHONE_NUMBER_ID) {
+  const phoneNumId = await getPhoneNumberId();
+
+  if (!AGENT_ID || !phoneNumId) {
     console.warn("ElevenLabs agent/phone not configured; logging stub call");
 
     await sql`
@@ -64,13 +81,13 @@ export async function callPatient(opts: {
   // Place outbound call via ElevenLabs Conversational AI telephony
   const result = await client.conversationalAi.twilio.outboundCall({
     agentId: AGENT_ID,
-    agentPhoneNumberId: PHONE_NUMBER_ID,
+    agentPhoneNumberId: phoneNumId,
     toNumber,
     conversationInitiationClientData: {
       conversationConfigOverride: {
         agent: {
           firstMessage: opts.firstMessage,
-          language: opts.language === "es" ? "es" : opts.language === "ht" ? "ht" : "en",
+          language: opts.language === "es" ? "es" : "en",
         },
       },
       dynamicVariables: {
