@@ -4,10 +4,18 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   const rows = await sql`
-    select id, first_name, last_name, dob, phone, preferred_language, preferred_channel,
-           address_line1, city, state, zip, home_visit_ok
-    from patients
-    order by last_name, first_name`;
+    select p.id, p.first_name, p.last_name, p.dob, p.phone,
+           p.preferred_language, p.preferred_channel,
+           p.address_line1, p.city, p.state, p.zip,
+           p.home_visit_ok, p.mobility_notes,
+           py.name as payer_name, py.type as payer_type,
+           pc.plan_name, pc.eligibility_status,
+           pc.pt_visit_limit, pc.pt_visits_used, pc.copay_cents,
+           pc.requires_auth
+    from patients p
+    left join patient_coverage pc on pc.patient_id = p.id and pc.is_primary
+    left join payers py on py.id = pc.payer_id
+    order by p.last_name, p.first_name`;
   return NextResponse.json(rows);
 }
 

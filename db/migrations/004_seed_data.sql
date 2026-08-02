@@ -90,11 +90,6 @@ insert into patient_coverage (patient_id, payer_id, member_id, plan_name, eligib
 ('c0000000-0000-0000-0000-000000000005','a0000000-0000-0000-0000-000000000004','SMP70244','Simply Medicaid MMA','unverified',null,null,0,true, null, true),
 ('c0000000-0000-0000-0000-000000000006','a0000000-0000-0000-0000-000000000001','FB33471','BlueCare HMO 121','active',30,4,2500,false, now() - interval '1 day', true);
 
--- ---------- PENDING INVITE ----------
-insert into user_invites (email, role, center_id) values
-('frontdesk@kendallrehab.example','center_staff',
- 'f0000000-0000-0000-0000-000000000002');
-
 -- ---------- PT CENTERS ----------
 insert into pt_centers (id, name, phone, email, address_line1, city, state, zip, geom,
                         offers_home_visits, home_visit_radius_km, scheduling_mode, ehr_system, onboarded, rating) values
@@ -114,6 +109,11 @@ insert into pt_centers (id, name, phone, email, address_line1, city, state, zip,
  ST_SetSRID(ST_MakePoint(-80.1560,25.8890),4326)::geography,false,null,'phone','WebPT',false,4.0),
 ('f0000000-0000-0000-0000-000000000008','Doral Rehab Institute','305-555-2008','contact@doralrehab.example','3650 NW 82nd Ave','Doral','FL','33166',
  ST_SetSRID(ST_MakePoint(-80.3320,25.8080),4326)::geography,false,null,'email','Clinicient',false,4.3);
+
+-- ---------- PENDING INVITE (after centers exist) ----------
+insert into user_invites (email, role, center_id) values
+('frontdesk@kendallrehab.example','center_staff',
+ 'f0000000-0000-0000-0000-000000000002');
 
 -- ---------- CENTER SERVICES ----------
 insert into center_services (center_id, service_type_id) values
