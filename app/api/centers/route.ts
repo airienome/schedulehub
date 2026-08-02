@@ -7,7 +7,13 @@ export async function GET() {
            c.offers_home_visits, c.home_visit_radius_km, c.scheduling_mode,
            c.ehr_system, c.onboarded, c.rating,
            array_agg(distinct st.name) filter (where st.name is not null) as services,
-           array_agg(distinct py.name) filter (where cnp.in_network) as in_network_payers
+           array_agg(distinct st.code) filter (where st.code is not null) as service_codes,
+           array_agg(distinct py.name) filter (where cnp.in_network) as in_network_payers,
+           (select min(ca.slot_start) from center_availability ca
+            where ca.center_id = c.id and ca.slot_start > now() and ca.booked < ca.capacity) as next_available,
+           (select coalesce(sum(ca.capacity - ca.booked), 0) from center_availability ca
+            where ca.center_id = c.id and ca.slot_start > now()
+            and ca.slot_start < now() + interval '7 days' and ca.booked < ca.capacity) as open_spots
     from pt_centers c
     left join center_services cs on cs.center_id = c.id
     left join service_types st on st.id = cs.service_type_id
