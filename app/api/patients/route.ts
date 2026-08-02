@@ -21,12 +21,17 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { first_name, last_name, dob, phone, preferred_language, preferred_channel } = body;
+  const {
+    first_name, last_name, dob, phone, preferred_language, preferred_channel,
+    address_line1, city, state, zip,
+  } = body;
 
   const rows = await sql`
-    insert into patients (first_name, last_name, dob, phone, preferred_language, preferred_channel)
+    insert into patients (first_name, last_name, dob, phone, preferred_language, preferred_channel,
+                          address_line1, city, state, zip)
     values (${first_name}, ${last_name}, ${dob}, ${phone},
-            ${preferred_language || "en"}, ${preferred_channel || "sms"})
+            ${preferred_language || "en"}, ${preferred_channel || "sms"},
+            ${address_line1 || null}, ${city || null}, ${state || null}, ${zip || null})
     returning *`;
 
   await auditLog("demo_doctor", "patient_created", "patients", rows[0].id as string);

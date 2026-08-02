@@ -39,11 +39,35 @@ export default function DoctorPage() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<string | null>(null);
 
+  const [showAddPatient, setShowAddPatient] = useState(false);
+  const [newPatient, setNewPatient] = useState({
+    first_name: "", last_name: "", dob: "", phone: "",
+    preferred_language: "en", address_line1: "", city: "Miami", state: "FL", zip: "",
+  });
+  const [addingPatient, setAddingPatient] = useState(false);
+
   useEffect(() => {
-    fetch("/api/patients").then(r => r.json()).then(setPatients);
-    fetch("/api/lookup?type=service_types").then(r => r.json()).then(setServiceTypes);
-    fetch(`/api/adherence?practice_id=${PRACTICE_ID}`).then(r => r.json()).then(setAdherence);
+    fetch("/api/patients").then(r => r.json()).then(d => { if (Array.isArray(d)) setPatients(d); });
+    fetch("/api/lookup?type=service_types").then(r => r.json()).then(d => { if (Array.isArray(d)) setServiceTypes(d); });
+    fetch(`/api/adherence?practice_id=${PRACTICE_ID}`).then(r => r.json()).then(d => { if (Array.isArray(d)) setAdherence(d); });
   }, []);
+
+  async function addPatient() {
+    setAddingPatient(true);
+    const res = await fetch("/api/patients", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newPatient),
+    });
+    if (res.ok) {
+      // Reload full roster to get insurance join data
+      const updated = await fetch("/api/patients").then(r => r.json());
+      if (Array.isArray(updated)) setPatients(updated);
+      setShowAddPatient(false);
+      setNewPatient({ first_name: "", last_name: "", dob: "", phone: "", preferred_language: "en", address_line1: "", city: "Miami", state: "FL", zip: "" });
+    }
+    setAddingPatient(false);
+  }
 
   function selectAndPrescribe(p: Patient) {
     setSelectedPatient(p);
@@ -121,6 +145,64 @@ export default function DoctorPage() {
 
         {/* Patients roster */}
         {tab === "patients" && (
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <button onClick={() => setShowAddPatient(!showAddPatient)}
+                className="px-4 py-2 bg-pink text-white rounded-xl text-sm font-semibold hover:bg-pink-dark transition-colors">
+                + Add Patient
+              </button>
+            </div>
+
+            {showAddPatient && (
+              <div className="bg-white rounded-2xl border border-warm-200 shadow-sm p-5 space-y-4">
+                <h3 className="font-semibold text-warm-900">New Patient</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <input placeholder="First name" value={newPatient.first_name}
+                    onChange={e => setNewPatient({ ...newPatient, first_name: e.target.value })}
+                    className="border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                  <input placeholder="Last name" value={newPatient.last_name}
+                    onChange={e => setNewPatient({ ...newPatient, last_name: e.target.value })}
+                    className="border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                  <input type="date" placeholder="DOB" value={newPatient.dob}
+                    onChange={e => setNewPatient({ ...newPatient, dob: e.target.value })}
+                    className="border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                  <input placeholder="Phone (305-555-1234)" value={newPatient.phone}
+                    onChange={e => setNewPatient({ ...newPatient, phone: e.target.value })}
+                    className="border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                  <input placeholder="Address" value={newPatient.address_line1}
+                    onChange={e => setNewPatient({ ...newPatient, address_line1: e.target.value })}
+                    className="border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                  <input placeholder="City" value={newPatient.city}
+                    onChange={e => setNewPatient({ ...newPatient, city: e.target.value })}
+                    className="border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                  <input placeholder="State" value={newPatient.state}
+                    onChange={e => setNewPatient({ ...newPatient, state: e.target.value })}
+                    className="border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                  <input placeholder="ZIP" value={newPatient.zip}
+                    onChange={e => setNewPatient({ ...newPatient, zip: e.target.value })}
+                    className="border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                  <select value={newPatient.preferred_language}
+                    onChange={e => setNewPatient({ ...newPatient, preferred_language: e.target.value })}
+                    className="border border-warm-300 rounded-xl px-3 py-2 text-sm">
+                    <option value="en">English</option>
+                    <option value="es">Spanish</option>
+                    <option value="ht">Haitian Creole</option>
+                  </select>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={addPatient}
+                    disabled={addingPatient || !newPatient.first_name || !newPatient.last_name || !newPatient.phone || !newPatient.dob}
+                    className="px-5 py-2 bg-sky text-warm-800 rounded-xl text-sm font-semibold hover:bg-sky-dark disabled:opacity-50 transition-colors">
+                    {addingPatient ? "Adding..." : "Add Patient"}
+                  </button>
+                  <button onClick={() => setShowAddPatient(false)}
+                    className="px-5 py-2 border border-warm-300 rounded-xl text-sm text-warm-500 hover:bg-warm-50 transition-colors">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
           <div className="bg-white rounded-2xl border border-warm-200 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -178,6 +260,7 @@ export default function DoctorPage() {
                 </tbody>
               </table>
             </div>
+          </div>
           </div>
         )}
 
