@@ -38,3 +38,33 @@ export async function POST(req: Request) {
 
   return NextResponse.json(rows[0], { status: 201 });
 }
+export async function PUT(req: Request) {
+  const body = await req.json();
+  const {
+    id, first_name, last_name, dob, phone, preferred_language,
+    address_line1, city, state, zip, home_visit_ok,
+  } = body;
+
+  if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+
+  const rows = await sql`
+    update patients set
+      first_name = ${first_name},
+      last_name = ${last_name},
+      dob = ${dob},
+      phone = ${phone},
+      preferred_language = ${preferred_language || "en"},
+      address_line1 = ${address_line1 || null},
+      city = ${city || null},
+      state = ${state || null},
+      zip = ${zip || null},
+      home_visit_ok = ${home_visit_ok || false}
+    where id = ${id}::uuid
+    returning *`;
+
+  if (!rows.length) return NextResponse.json({ error: "not found" }, { status: 404 });
+
+  await auditLog("demo_doctor", "patient_updated", "patients", id);
+
+  return NextResponse.json(rows[0]);
+}

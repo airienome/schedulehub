@@ -69,6 +69,35 @@ export default function DoctorPage() {
     setAddingPatient(false);
   }
 
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+  const [editForm, setEditForm] = useState({ first_name: "", last_name: "", dob: "", phone: "", preferred_language: "en", address_line1: "", city: "", state: "", zip: "", home_visit_ok: false });
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  function startEdit(p: Patient) {
+    setEditingPatient(p);
+    setEditForm({
+      first_name: p.first_name, last_name: p.last_name, dob: p.dob, phone: p.phone,
+      preferred_language: p.preferred_language, address_line1: p.address_line1 || "",
+      city: p.city || "", state: p.state || "", zip: p.zip || "", home_visit_ok: p.home_visit_ok,
+    });
+  }
+
+  async function saveEdit() {
+    if (!editingPatient) return;
+    setSavingEdit(true);
+    const res = await fetch("/api/patients", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: editingPatient.id, ...editForm }),
+    });
+    if (res.ok) {
+      const updated = await fetch("/api/patients").then(r => r.json());
+      if (Array.isArray(updated)) setPatients(updated);
+      setEditingPatient(null);
+    }
+    setSavingEdit(false);
+  }
+
   function selectAndPrescribe(p: Patient) {
     setSelectedPatient(p);
     setTab("prescribe");
@@ -250,10 +279,16 @@ export default function DoctorPage() {
                         )}
                       </td>
                       <td className="p-4">
-                        <button onClick={() => selectAndPrescribe(p)}
-                          className="px-3 py-1.5 bg-sky text-warm-800 rounded-lg text-xs font-medium hover:bg-sky-dark transition-colors">
-                          Prescribe PT
-                        </button>
+                        <div className="flex gap-1.5">
+                          <button onClick={() => startEdit(p)}
+                            className="px-3 py-1.5 border border-warm-300 rounded-lg text-xs font-medium text-warm-600 hover:bg-warm-50 transition-colors">
+                            Edit
+                          </button>
+                          <button onClick={() => selectAndPrescribe(p)}
+                            className="px-3 py-1.5 bg-sky text-warm-800 rounded-lg text-xs font-medium hover:bg-sky-dark transition-colors">
+                            Prescribe PT
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -261,6 +296,78 @@ export default function DoctorPage() {
               </table>
             </div>
           </div>
+
+          {/* Edit patient modal */}
+          {editingPatient && (
+            <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl shadow-lg w-full max-w-lg p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-lg text-warm-900">Edit Patient</h3>
+                  <button onClick={() => setEditingPatient(null)} className="text-warm-400 hover:text-warm-600 text-xl">&times;</button>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-warm-500 mb-1">First name</label>
+                    <input value={editForm.first_name} onChange={e => setEditForm({ ...editForm, first_name: e.target.value })}
+                      className="w-full border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-warm-500 mb-1">Last name</label>
+                    <input value={editForm.last_name} onChange={e => setEditForm({ ...editForm, last_name: e.target.value })}
+                      className="w-full border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-warm-500 mb-1">DOB</label>
+                    <input type="date" value={editForm.dob} onChange={e => setEditForm({ ...editForm, dob: e.target.value })}
+                      className="w-full border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-warm-500 mb-1">Phone</label>
+                    <input value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value })}
+                      className="w-full border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs font-medium text-warm-500 mb-1">Address</label>
+                    <input value={editForm.address_line1} onChange={e => setEditForm({ ...editForm, address_line1: e.target.value })}
+                      className="w-full border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                  </div>
+                  <input placeholder="City" value={editForm.city} onChange={e => setEditForm({ ...editForm, city: e.target.value })}
+                    className="border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                  <div className="flex gap-2">
+                    <input placeholder="State" value={editForm.state} onChange={e => setEditForm({ ...editForm, state: e.target.value })}
+                      className="w-20 border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                    <input placeholder="ZIP" value={editForm.zip} onChange={e => setEditForm({ ...editForm, zip: e.target.value })}
+                      className="flex-1 border border-warm-300 rounded-xl px-3 py-2 text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-warm-500 mb-1">Language</label>
+                    <select value={editForm.preferred_language} onChange={e => setEditForm({ ...editForm, preferred_language: e.target.value })}
+                      className="w-full border border-warm-300 rounded-xl px-3 py-2 text-sm">
+                      <option value="en">English</option>
+                      <option value="es">Spanish</option>
+                      <option value="ht">Haitian Creole</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2 pt-5">
+                    <input type="checkbox" id="homeOk" checked={editForm.home_visit_ok}
+                      onChange={e => setEditForm({ ...editForm, home_visit_ok: e.target.checked })}
+                      className="rounded" />
+                    <label htmlFor="homeOk" className="text-sm text-warm-700">Home/mobile therapy OK</label>
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <button onClick={saveEdit} disabled={savingEdit}
+                    className="px-5 py-2 bg-sky text-warm-800 rounded-xl text-sm font-semibold hover:bg-sky-dark disabled:opacity-50 transition-colors">
+                    {savingEdit ? "Saving..." : "Save Changes"}
+                  </button>
+                  <button onClick={() => setEditingPatient(null)}
+                    className="px-5 py-2 border border-warm-300 rounded-xl text-sm text-warm-500 hover:bg-warm-50 transition-colors">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           </div>
         )}
 
