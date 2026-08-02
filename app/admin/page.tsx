@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 type Order = {
   id: string; status: string; urgency: string; created_at: string;
-  patient_first: string; patient_last: string; patient_phone: string;
+  patient_id: string; patient_first: string; patient_last: string; patient_phone: string;
   service_code: string; service_name: string;
   provider_first: string; provider_last: string;
   practice_name?: string;
@@ -32,8 +32,9 @@ const STATUS_COLORS: Record<string, string> = {
 export default function AdminPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [outreach, setOutreach] = useState<OutreachMsg[]>([]);
-  const [activeTab, setActiveTab] = useState<"orders" | "outreach">("orders");
+  const [activeTab, setActiveTab] = useState<"orders" | "outreach" | "links">("orders");
   const [loading, setLoading] = useState(true);
+  const [generatedLink, setGeneratedLink] = useState<{ url: string; patient: string } | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -92,6 +93,12 @@ export default function AdminPage() {
             activeTab === "outreach" ? "bg-white shadow-sm" : "text-gray-500 hover:text-gray-700"
           }`}>
           Outreach Log ({outreach.length})
+        </button>
+        <button onClick={() => setActiveTab("links")}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            activeTab === "links" ? "bg-white shadow-sm" : "text-gray-500 hover:text-gray-700"
+          }`}>
+          Patient Links
         </button>
       </div>
 
@@ -192,6 +199,59 @@ export default function AdminPage() {
               </tbody>
             </table>
           </div>
+        </div>
+      ) : (
+        /* Patient Links tab */
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4">
+          <h2 className="font-semibold text-lg">Generate Patient Link</h2>
+          <p className="text-sm text-gray-500">
+            Create a short-lived signed link for a patient to view their appointment status.
+            This is what gets sent to their phone. No login, no account - just a tap.
+          </p>
+
+          <div className="flex flex-wrap gap-2">
+            {/* Show unique patients from orders */}
+            {Array.from(new Map(orders.map(o => [
+              `${o.patient_first} ${o.patient_last}`,
+              { name: `${o.patient_first} ${o.patient_last}`, phone: o.patient_phone, id: o.patient_id }
+            ])).entries())
+              .filter(([, v]) => v.id)
+              .map(([name, info]) => (
+              <button key={name} onClick={async () => {
+                const res = await fetch("/api/patient-link", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ patient_id: info.id }),
+                });
+                if (res.ok) {
+                  const data = await res.json();
+                  setGeneratedLink(data);
+                }
+              }}
+                className="px-3 py-2 bg-gray-50 border rounded-lg text-sm hover:bg-gray-100 transition-colors">
+                {name} <span className="text-gray-400 text-xs">{info.phone}</span>
+              </button>
+            ))}
+          </div>
+
+          {generatedLink && (
+            <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg space-y-2">
+              <p className="text-sm font-medium">Link for {generatedLink.patient}:</p>
+              <div className="flex gap-2">
+                <input readOnly value={generatedLink.url}
+                  className="flex-1 text-xs bg-white border rounded px-2 py-1.5 font-mono" />
+                <button onClick={() => navigator.clipboard.writeText(generatedLink.url)}
+                  className="px-3 py-1.5 bg-amber-600 text-white rounded text-xs hover:bg-amber-700">
+                  Copy
+                </button>
+                <a href={generatedLink.url} target="_blank" rel="noopener noreferrer"
+                  className="px-3 py-1.5 bg-blue-600 text-white rounded text-xs hover:bg-blue-700">
+                  Open
+                </a>
+              </div>
+              <p className="text-xs text-amber-600">Expires in {generatedLink.expires_in}</p>
+            </div>
+          )}
         </div>
       )}
     </main>

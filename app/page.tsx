@@ -70,7 +70,7 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2">
           <Link
             href="/doctor"
             className="group rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md hover:border-blue-300 transition-all"
@@ -92,17 +92,15 @@ export default function Home() {
               Order pipeline, matching status, outreach log
             </p>
           </Link>
+        </div>
 
-          <Link
-            href="/patient"
-            className="group rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md hover:border-amber-300 transition-all"
-          >
-            <div className="text-2xl mb-2">📱</div>
-            <h2 className="font-semibold text-lg">Patient View</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Call log, appointment status (demo observer view)
-            </p>
-          </Link>
+        <div className="rounded-xl border border-dashed border-gray-300 bg-white/50 p-4 text-center space-y-1">
+          <p className="text-sm text-gray-500">
+            📱 <span className="font-medium">Patient view</span> is only accessible via a signed link sent to the patient&apos;s phone.
+          </p>
+          <p className="text-xs text-gray-400">
+            No accounts, no logins. Patients tap the link in their text message.
+          </p>
         </div>
 
         <p className="text-center text-xs text-gray-400">
