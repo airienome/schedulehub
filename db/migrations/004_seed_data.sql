@@ -8,7 +8,10 @@ insert into neon_auth.users_sync (id, name, email, created_at) values
 ('nau_phil_001','Phil Chaunu','phil@cyvine.example', now()),
 ('nau_mfern_01','Maria Fernandez','mfernandez@gablesortho.example', now()),
 ('nau_coord_01','Vanessa Ortiz','vortiz@gablesortho.example', now()),
-('nau_lbet_001','Luis Betancourt','lbetancourt@doralspine.example', now());
+('nau_lbet_001','Luis Betancourt','lbetancourt@doralspine.example', now()),
+('nau_joka_001','James Okafor','jokafor@gablesortho.example', now()),
+('nau_rchen_01','Rachel Chen','rchen@brickellsports.example', now()),
+('nau_dpat_001','David Patterson','dpatterson@brickellsports.example', now());
 
 -- ---------- PAYERS ----------
 insert into payers (id, name, payer_id_code, type) values
@@ -18,25 +21,34 @@ insert into payers (id, name, payer_id_code, type) values
 ('a0000000-0000-0000-0000-000000000004','Simply Healthcare (FL Medicaid)','SIMPLY','medicaid'),
 ('a0000000-0000-0000-0000-000000000005','Original Medicare','CMS','medicare');
 
--- ---------- PRACTICES & PROVIDERS ----------
+-- ---------- PRACTICES & PROVIDERS (3 practices, 5 doctors) ----------
 insert into practices (id, name, npi_org, phone, fax, address_line1, city, state, zip) values
 ('b0000000-0000-0000-0000-000000000001','Gables Orthopedic Group','1234567001','305-555-0100','305-555-0101','2601 SW 37th Ave','Coral Gables','FL','33133'),
-('b0000000-0000-0000-0000-000000000002','Doral Spine & Rehab Physicians','1234567002','305-555-0200','305-555-0201','8400 NW 36th St','Doral','FL','33166');
+('b0000000-0000-0000-0000-000000000002','Doral Spine & Rehab Physicians','1234567002','305-555-0200','305-555-0201','8400 NW 36th St','Doral','FL','33166'),
+('b0000000-0000-0000-0000-000000000003','Brickell Sports Medicine','1234567003','305-555-0300','305-555-0301','1001 Brickell Bay Dr','Miami','FL','33131');
 
 insert into providers (id, practice_id, first_name, last_name, npi, specialty, email, phone) values
 ('d0000000-0000-0000-0000-000000000001','b0000000-0000-0000-0000-000000000001','Maria','Fernandez','1112223001','orthopedic_surgery','mfernandez@gablesortho.example','305-555-0102'),
 ('d0000000-0000-0000-0000-000000000002','b0000000-0000-0000-0000-000000000001','James','Okafor','1112223002','sports_medicine','jokafor@gablesortho.example','305-555-0103'),
-('d0000000-0000-0000-0000-000000000003','b0000000-0000-0000-0000-000000000002','Luis','Betancourt','1112223003','physiatry','lbetancourt@doralspine.example','305-555-0202');
+('d0000000-0000-0000-0000-000000000003','b0000000-0000-0000-0000-000000000002','Luis','Betancourt','1112223003','physiatry','lbetancourt@doralspine.example','305-555-0202'),
+('d0000000-0000-0000-0000-000000000004','b0000000-0000-0000-0000-000000000003','Rachel','Chen','1112223004','sports_medicine','rchen@brickellsports.example','305-555-0302'),
+('d0000000-0000-0000-0000-000000000005','b0000000-0000-0000-0000-000000000003','David','Patterson','1112223005','orthopedic_surgery','dpatterson@brickellsports.example','305-555-0303');
 
--- ---------- APP USERS ----------
+-- ---------- APP USERS (all 5 doctors + admin + coordinator) ----------
 insert into app_users (auth_user_id, role, practice_id, provider_id) values
 ('nau_phil_001','platform_admin', null, null),
 ('nau_mfern_01','provider',
  'b0000000-0000-0000-0000-000000000001','d0000000-0000-0000-0000-000000000001'),
+('nau_joka_001','provider',
+ 'b0000000-0000-0000-0000-000000000001','d0000000-0000-0000-0000-000000000002'),
 ('nau_coord_01','coordinator',
  'b0000000-0000-0000-0000-000000000001', null),
 ('nau_lbet_001','provider',
- 'b0000000-0000-0000-0000-000000000002','d0000000-0000-0000-0000-000000000003');
+ 'b0000000-0000-0000-0000-000000000002','d0000000-0000-0000-0000-000000000003'),
+('nau_rchen_01','provider',
+ 'b0000000-0000-0000-0000-000000000003','d0000000-0000-0000-0000-000000000004'),
+('nau_dpat_001','provider',
+ 'b0000000-0000-0000-0000-000000000003','d0000000-0000-0000-0000-000000000005');
 
 -- ---------- SERVICE TYPES ----------
 insert into service_types (id, code, name, description) values

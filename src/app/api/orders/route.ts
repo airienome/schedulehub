@@ -1,6 +1,6 @@
 import { sql } from "@/lib/db";
 import { auditLog } from "@/lib/audit";
-import { callPatient } from "@/lib/voice";
+import { sendSms } from "@/lib/sms";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
@@ -93,7 +93,7 @@ export async function POST(req: Request) {
     provider_id,
   });
 
-  // Get patient info for the call
+  // Get patient info for the SMS
   const patients = await sql`
     select first_name, last_name, phone, preferred_language
     from patients where id = ${patient_id}::uuid`;
@@ -102,7 +102,7 @@ export async function POST(req: Request) {
     const patient = patients[0];
     const lang = patient.preferred_language as string;
 
-    // Get provider + service info for the call script
+    // Get provider info for the message
     const providers = await sql`
       select pr.first_name, pr.last_name, prac.name as practice_name
       from providers pr join practices prac on prac.id = pr.practice_id
@@ -121,31 +121,23 @@ export async function POST(req: Request) {
       ? (services[0].name as string)
       : "physical therapy";
 
-    const firstMessage =
+    // Step 1: Text the patient asking for consent to call
+    const smsBody =
       lang === "es"
-        ? `Hola ${patient.first_name}, le llamo del consultorio de ${providerName} en ${practiceName}. El doctor le ha referido para ${serviceName}. Necesito saber que dias y horarios le funcionan mejor para sus citas de terapia fisica. Que dias de la semana puede ir y a que horas?`
-        : `Hi ${patient.first_name}, I'm calling from ${providerName}'s office at ${practiceName}. The doctor has referred you for ${serviceName}. I need to find out what days and times work best for your therapy appointments. What days of the week work for you and what times are you available?`;
+        ? `Hola ${patient.first_name}, le escribimos de parte de ${providerName} en ${practiceName}. El doctor le ha referido para ${serviceName}. Podemos llamarle para coordinar sus citas? Responda SI para recibir la llamada.`
+        : `Hi ${patient.first_name}, this is ScheduleHub on behalf of ${providerName} at ${practiceName}. The doctor has referred you for ${serviceName}. Can we call you to schedule your appointments? Reply YES to receive a call.`;
 
     // Update order status
     await sql`
       update orders set status = 'contacting_patient' where id = ${order.id}::uuid`;
 
-    // Place the call
-    await callPatient({
+    // Send the SMS via Twilio
+    await sendSms({
       patientId: patient_id,
       orderId: order.id as string,
       phone: patient.phone as string,
+      body: smsBody,
       purpose: "intake_availability",
-      firstMessage,
-      language: lang,
-      dynamicVariables: {
-        patient_name: `${patient.first_name} ${patient.last_name}`,
-        doctor_name: providerName,
-        practice_name: practiceName,
-        service_type: serviceName,
-        frequency: `${frequency_per_week} times per week`,
-        duration: duration_weeks ? `${duration_weeks} weeks` : "as prescribed",
-      },
     });
   }
 
