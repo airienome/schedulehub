@@ -124,8 +124,8 @@ export async function POST(req: Request) {
     // Step 1: Text the patient asking for consent to call
     const smsBody =
       lang === "es"
-        ? `Hola ${patient.first_name}, le escribimos de parte de ${providerName} en ${practiceName}. El doctor le ha referido para ${serviceName}. Podemos llamarle para coordinar sus citas? Responda SI para recibir la llamada.`
-        : `Hi ${patient.first_name}, this is TherapyFlow on behalf of ${providerName} at ${practiceName}. The doctor has referred you for ${serviceName}. Can we call you to schedule your appointments? Reply YES to receive a call.`;
+        ? `Hola ${patient.first_name}, le escribimos de parte de ${providerName} en ${practiceName}. El doctor le ha referido para ${serviceName}. Podemos coordinar sus citas? Responda SI para una llamada o TEXTO para programar por mensaje.`
+        : `Hi ${patient.first_name}, this is TherapyFlow on behalf of ${providerName} at ${practiceName}. The doctor has referred you for ${serviceName}. Reply YES for a scheduling call, or TEXT to schedule by message.`;
 
     // Update order status
     await sql`

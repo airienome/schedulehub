@@ -69,7 +69,12 @@ export async function callPatient(opts: {
           language: opts.language === "es" ? "es" : opts.language === "ht" ? "ht" : "en",
         },
       },
-      dynamicVariables: opts.dynamicVariables,
+      dynamicVariables: {
+        patient_phone: opts.phone,
+        patient_id: opts.patientId,
+        order_id: opts.orderId,
+        ...opts.dynamicVariables,
+      },
     },
   });
 
