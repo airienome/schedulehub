@@ -420,20 +420,24 @@ export default function DoctorPage() {
                     <h3 className="text-sm font-semibold text-warm-900 mb-2">Communication Log</h3>
                     <div className="space-y-2">
                       {detailOutreach.map(msg => (
-                        <div key={msg.id} className={`rounded-xl p-3 text-xs ${msg.direction === "inbound" ? "bg-sky/15 border border-sky/30 ml-6" : "bg-warm-50 border border-warm-200 mr-6"}`}>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${msg.channel === "voice" ? "bg-lavender/15 text-lavender" : "bg-sky/30 text-warm-800"}`}>{msg.channel}</span>
-                            <span className="text-warm-400">{msg.direction === "outbound" ? "Sent" : "Received"}</span>
-                            <span className="text-warm-300">{new Date(msg.sent_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>
-                            {msg.direction === "outbound" && (
-                              <span className={`ml-auto text-[10px] font-medium ${msg.responded ? "text-olive-dark" : "text-warm-400"}`}>{msg.responded ? "Replied" : "No reply"}</span>
-                            )}
+                        <div key={msg.id} className={`rounded-xl p-3 ${msg.direction === "inbound" ? "bg-sky/15 border border-sky/30 ml-4" : "bg-warm-50 border border-warm-200 mr-4"}`}>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${msg.channel === "voice" ? "bg-lavender/15 text-lavender" : "bg-sky/30 text-warm-700"}`}>{msg.channel === "voice" ? "Call" : "SMS"}</span>
+                              <span className="text-[11px] font-medium text-warm-600">{msg.direction === "outbound" ? "Sent" : "Received"}</span>
+                              {msg.direction === "outbound" && (
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${msg.responded ? "bg-olive/20 text-olive-dark" : "bg-warm-100 text-warm-400"}`}>{msg.responded ? "Replied" : "No reply"}</span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-warm-400 whitespace-nowrap">
+                              {new Date(msg.sent_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })} {new Date(msg.sent_at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", second: "2-digit" })}
+                            </span>
                           </div>
-                          <div className="text-warm-700">{msg.body}</div>
+                          <p className="text-xs text-warm-700 break-words whitespace-pre-wrap leading-relaxed">{msg.body}</p>
                           {msg.ai_extraction && (
                             <details className="mt-1.5">
-                              <summary className="text-warm-400 cursor-pointer">AI extraction</summary>
-                              <pre className="text-[10px] text-warm-500 mt-1 whitespace-pre-wrap">{JSON.stringify(msg.ai_extraction, null, 2)}</pre>
+                              <summary className="text-[10px] text-warm-400 cursor-pointer">AI extraction</summary>
+                              <pre className="text-[10px] text-warm-500 mt-1 whitespace-pre-wrap break-all">{JSON.stringify(msg.ai_extraction, null, 2)}</pre>
                             </details>
                           )}
                         </div>

@@ -373,13 +373,22 @@ export function PatientTimeline({ patientId }: { patientId: string }) {
       {messages.length > 0 && (
         <div className="bg-white rounded-2xl border border-warm-200 shadow-sm p-5 space-y-3">
           <h2 className="font-semibold text-warm-900">Messages</h2>
-          {messages.slice(0, 5).map(msg => (
-            <div key={msg.id} className={`rounded-xl p-3 text-sm ${msg.direction === "inbound" ? "bg-sky/20 border border-sky/40 ml-8" : "bg-warm-50 border border-warm-200 mr-8"}`}>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs text-warm-400">{msg.channel === "voice" ? "Phone call" : msg.direction === "outbound" ? "TherapyFlow" : "You"}</span>
-                <span className="text-xs text-warm-300">{new Date(msg.sent_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>
+          {messages.map(msg => (
+            <div key={msg.id} className={`rounded-xl p-3 ${msg.direction === "inbound" ? "bg-sky/20 border border-sky/40 ml-6" : "bg-warm-50 border border-warm-200 mr-6"}`}>
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1.5">
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${msg.channel === "voice" ? "bg-lavender/15 text-lavender" : "bg-sky/30 text-warm-700"}`}>
+                    {msg.channel === "voice" ? "Call" : "SMS"}
+                  </span>
+                  <span className="text-[11px] font-medium text-warm-600">
+                    {msg.channel === "voice" ? "Phone call" : msg.direction === "outbound" ? "TherapyFlow" : "You"}
+                  </span>
+                </div>
+                <span className="text-[10px] text-warm-400 whitespace-nowrap">
+                  {new Date(msg.sent_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })} {new Date(msg.sent_at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", second: "2-digit" })}
+                </span>
               </div>
-              <p className="text-warm-700">{msg.body}</p>
+              <p className="text-xs text-warm-700 break-words whitespace-pre-wrap leading-relaxed">{msg.body}</p>
             </div>
           ))}
         </div>
