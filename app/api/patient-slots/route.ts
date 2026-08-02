@@ -17,17 +17,22 @@ export async function GET(req: Request) {
   // Get top matched centers for this order (in-network, nearby, with slots)
   const centers = await sql`
     select c.id, c.name, c.address_line1, c.city, c.state, c.zip, c.phone,
-           c.offers_home_visits,
-           round((ST_Distance(c.geom, p.geom) / 1000.0)::numeric, 1) as km
+           c.offers_home_visits, c.rating,
+           round((ST_Distance(c.geom, p.geom) / 1000.0)::numeric, 1) as km,
+           round((ST_Distance(c.geom, p.geom) / 1609.0)::numeric, 1) as miles,
+           array_agg(distinct st2.code) filter (where st2.code is not null) as service_codes
     from orders o
     join patients p on p.id = o.patient_id
     join patient_coverage pc on pc.patient_id = p.id and pc.is_primary
     join center_services cs on cs.service_type_id = o.service_type_id
     join pt_centers c on c.id = cs.center_id
     join center_network_participation cnp on cnp.center_id = c.id and cnp.payer_id = pc.payer_id
+    left join center_services cs2 on cs2.center_id = c.id
+    left join service_types st2 on st2.id = cs2.service_type_id
     where o.id = ${orderId}::uuid
       and cnp.in_network
       and c.onboarded
+    group by c.id, p.geom
     order by ST_Distance(c.geom, p.geom)
     limit 5`;
 

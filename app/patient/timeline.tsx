@@ -26,8 +26,17 @@ type Message = {
 };
 type CenterSlot = {
   id: string; name: string; address_line1: string; city: string; state: string; zip: string;
-  phone: string; km: number; offers_home_visits: boolean;
+  phone: string; km: number; miles: number; offers_home_visits: boolean;
+  rating: number; service_codes: string[] | null;
   slots: { slot_id: string; start: string; end: string }[];
+};
+
+const SPECIALTY_LABELS: Record<string, string> = {
+  PT_ORTHO: "Ortho", PT_NEURO: "Neuro", PT_AQUATIC: "Aquatic", OT: "OT", PT_HOME: "Home",
+};
+const SPECIALTY_COLORS: Record<string, string> = {
+  PT_ORTHO: "bg-peach/40 text-warm-800", PT_NEURO: "bg-lavender/20 text-lavender",
+  PT_AQUATIC: "bg-sky/30 text-warm-800", OT: "bg-warm-100 text-warm-600", PT_HOME: "bg-olive/20 text-olive-dark",
 };
 
 export function PatientTimeline({ patientId }: { patientId: string }) {
@@ -204,62 +213,111 @@ export function PatientTimeline({ patientId }: { patientId: string }) {
               </div>
             )}
 
+            {/* ===== STEP 1: Find a physical therapist (design-matched) ===== */}
             {isBookingThis && bookingStep === 1 && (
-              <div className="border border-sky/40 rounded-xl p-4 space-y-3 bg-sky/5">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-sm text-warm-900">1. Select a clinic and time</h3>
+                  <h3 className="font-bold text-warm-900">Find a physical therapist</h3>
                   <button onClick={() => setBookingOrderId(null)} className="text-xs text-warm-400 hover:text-warm-600">Cancel</button>
                 </div>
-                {loadingSlots ? <p className="text-sm text-warm-400 text-center py-4">Finding clinics near you...</p>
-                : centerSlots.length === 0 ? <p className="text-sm text-warm-500 text-center py-4">No slots found. Request a call and we will help.</p>
+                <p className="text-xs text-warm-500">In-network clinics near you, sorted by distance.</p>
+
+                {loadingSlots ? <p className="text-sm text-warm-400 text-center py-8">Finding clinics near you...</p>
+                : centerSlots.length === 0 ? <p className="text-sm text-warm-500 text-center py-8">No in-network clinics with open slots found. Request a call and we will help.</p>
                 : centerSlots.map(center => (
-                  <div key={center.id} className="bg-white rounded-xl border border-warm-200 p-3 space-y-2">
+                  <div key={center.id} className="bg-white rounded-2xl border border-warm-200 shadow-sm p-4 space-y-3">
+                    {/* Clinic header */}
+                    <div className="flex items-start justify-between">
+                      <span className="font-semibold text-warm-900">{center.name}</span>
+                      <span className="text-sm text-warm-500">&#9733; {center.rating}</span>
+                    </div>
+
+                    {/* Tags: specialty + distance */}
+                    <div className="flex gap-1.5 flex-wrap">
+                      {(center.service_codes || []).map(code => (
+                        <span key={code} className={`text-xs px-2 py-0.5 rounded-full font-medium ${SPECIALTY_COLORS[code] || "bg-warm-100 text-warm-500"}`}>
+                          {SPECIALTY_LABELS[code] || code}
+                        </span>
+                      ))}
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-warm-100 text-warm-500">{center.miles} mi</span>
+                      {center.offers_home_visits && <span className="text-xs px-2 py-0.5 rounded-full bg-olive/20 text-olive-dark">Home visits</span>}
+                    </div>
+
+                    {/* Next available + spots + Book */}
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="font-medium text-sm text-warm-900">{center.name}</div>
-                        <div className="text-xs text-warm-500">{center.address_line1}, {center.city} ({center.km} km)</div>
+                        <div className="text-xs text-warm-400">Next available</div>
+                        <div className="font-bold text-sm text-warm-800">
+                          {center.slots.length > 0 ? `${fmtDate(center.slots[0].start)} ${fmtTime(center.slots[0].start)}` : "No slots"}
+                        </div>
                       </div>
-                      <a href={mapsUrl(center.address_line1, center.city, center.state, center.zip)} target="_blank" rel="noopener noreferrer" className="text-xs text-pink hover:text-pink-dark">Map &#8599;</a>
+                      <div className="flex items-center gap-3">
+                        <div className="text-center">
+                          <div className="w-11 h-11 rounded-full border-2 border-olive flex items-center justify-center font-bold text-olive-dark text-sm">
+                            {center.slots.length}
+                          </div>
+                          <div className="text-[10px] text-warm-400 mt-0.5">spots</div>
+                        </div>
+                      </div>
                     </div>
-                    {center.slots.length > 0 ? (
-                      <div className="flex gap-1.5 flex-wrap">
-                        {center.slots.slice(0, 8).map(slot => (
-                          <button key={slot.slot_id} onClick={() => selectSlot(center, slot)} className="px-2.5 py-1.5 border border-warm-300 rounded-lg text-xs hover:bg-pink hover:text-white hover:border-pink transition-colors">{fmtDate(slot.start)} {fmtTime(slot.start)}</button>
-                        ))}
+
+                    {/* Time slots */}
+                    {center.slots.length > 0 && (
+                      <div>
+                        <div className="text-xs text-warm-500 mb-2">Select a time:</div>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {center.slots.slice(0, 9).map(slot => (
+                            <button key={slot.slot_id} onClick={() => selectSlot(center, slot)}
+                              className="px-2 py-2 border border-warm-300 rounded-lg text-xs text-center hover:bg-pink hover:text-white hover:border-pink transition-colors">
+                              <div className="font-medium">{fmtDate(slot.start)}</div>
+                              <div>{fmtTime(slot.start)}</div>
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    ) : <p className="text-xs text-warm-400">No open slots this week</p>}
+                    )}
                   </div>
                 ))}
               </div>
             )}
 
+            {/* ===== STEP 2: Review & confirm (design-matched) ===== */}
             {isBookingThis && bookingStep === 2 && selectedCenter && selectedSlot && (
-              <div className="border border-lavender/40 rounded-xl p-4 space-y-3 bg-lavender/5">
+              <div className="bg-white rounded-2xl border border-warm-200 shadow-sm p-5 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-sm text-warm-900">2. Review and confirm</h3>
+                  <h3 className="font-bold text-warm-900">Review &amp; confirm</h3>
                   <button onClick={() => setBookingStep(1)} className="text-xs text-warm-400 hover:text-warm-600">Back</button>
                 </div>
-                <div className="text-sm text-warm-700 leading-relaxed">
-                  <strong>{selectedCenter.name}</strong><br />
-                  <strong>{fmtDate(selectedSlot.start)}, {fmtTime(selectedSlot.start)}</strong><br />
-                  {selectedCenter.address_line1}, {selectedCenter.city}
+                <div className="text-sm text-warm-700 leading-relaxed space-y-1">
+                  <div className="font-semibold">{selectedCenter.name}</div>
+                  <div className="font-bold text-warm-900">{fmtDate(selectedSlot.start)}, {fmtTime(selectedSlot.start)}</div>
+                  <div className="text-warm-500">{selectedCenter.address_line1}, {selectedCenter.city}</div>
                 </div>
-                <a href={mapsUrl(selectedCenter.address_line1, selectedCenter.city, selectedCenter.state, selectedCenter.zip)} target="_blank" rel="noopener noreferrer" className="text-xs text-pink hover:text-pink-dark inline-block">View on Google Maps &#8599;</a>
-                <button onClick={confirmBooking} disabled={booking} className="w-full py-2.5 bg-pink text-white rounded-xl font-semibold text-sm hover:bg-pink-dark disabled:opacity-50 transition-colors">{booking ? "Booking..." : "Confirm Appointment"}</button>
+                <a href={mapsUrl(selectedCenter.address_line1, selectedCenter.city, selectedCenter.state, selectedCenter.zip)} target="_blank" rel="noopener noreferrer" className="text-xs text-pink font-medium hover:text-pink-dark inline-block">View on Google Maps &#8599;</a>
+                <button onClick={confirmBooking} disabled={booking} className="w-full py-3 bg-sky text-warm-800 rounded-xl font-bold text-sm hover:bg-sky-dark disabled:opacity-50 transition-colors">{booking ? "Booking..." : "Confirm Booking"}</button>
               </div>
             )}
 
+            {/* ===== STEP 3: Booking confirmed (design-matched) ===== */}
             {isBookingThis && bookingStep === 3 && selectedCenter && selectedSlot && bookingResult && (
-              <div className="border border-olive/40 rounded-xl p-4 space-y-3 bg-olive/10">
-                <h3 className="font-semibold text-sm text-olive-dark">&#10003; Appointment Confirmed</h3>
-                <div className="text-sm text-warm-700 leading-relaxed">
-                  Visit #{bookingResult.visit_number} at {selectedCenter.name}<br />
-                  <strong>{fmtDate(selectedSlot.start)}, {fmtTime(selectedSlot.start)}</strong><br />
-                  Confirmation #TF-{bookingResult.appointment_id.slice(0, 5).toUpperCase()}
+              <div className="bg-olive/10 rounded-2xl border border-olive/30 p-5 space-y-3">
+                <h3 className="font-bold text-olive-dark">&#10003; Booking confirmed</h3>
+                <div className="text-sm text-warm-700 leading-relaxed space-y-1">
+                  <div>You&apos;re booked with {selectedCenter.name}</div>
+                  <div className="font-bold text-warm-900">{fmtDate(selectedSlot.start)}, {fmtTime(selectedSlot.start)}</div>
+                  <div className="text-warm-500">Confirmation #TF-{bookingResult.appointment_id.slice(0, 5).toUpperCase()}</div>
                 </div>
-                <div className="flex gap-2">
-                  <a href={mapsUrl(selectedCenter.address_line1, selectedCenter.city, selectedCenter.state, selectedCenter.zip)} target="_blank" rel="noopener noreferrer" className="px-4 py-2 border border-warm-300 rounded-xl text-xs text-warm-600 hover:bg-warm-50 transition-colors">Get Directions</a>
-                  {remaining(order.id) > 1 && <button onClick={() => startBooking(order.id)} className="px-4 py-2 bg-sky text-warm-800 rounded-xl text-xs font-semibold hover:bg-sky-dark transition-colors">Book Another</button>}
+                <div className="flex gap-2 pt-1">
+                  <a href={mapsUrl(selectedCenter.address_line1, selectedCenter.city, selectedCenter.state, selectedCenter.zip)} target="_blank" rel="noopener noreferrer"
+                    className="px-4 py-2 border border-warm-300 bg-white rounded-xl text-xs font-medium text-warm-600 hover:bg-warm-50 transition-colors">
+                    Get Directions
+                  </a>
+                  {remaining(order.id) > 1 && (
+                    <button onClick={() => startBooking(order.id)}
+                      className="px-4 py-2 bg-sky text-warm-800 rounded-xl text-xs font-semibold hover:bg-sky-dark transition-colors">
+                      Book Another Visit
+                    </button>
+                  )}
                 </div>
               </div>
             )}
