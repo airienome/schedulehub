@@ -16,10 +16,12 @@ async function getPhoneNumberId(): Promise<string> {
   // If env var is a phone number or missing, look up via API
   try {
     const nums = await client.conversationalAi.phoneNumbers.list();
-    const match = Array.isArray(nums) ? nums.find((n: Record<string, unknown>) =>
-      n.assignedAgent && (n.assignedAgent as Record<string, unknown>).agentId === AGENT_ID
-    ) : null;
-    if (match) return (match as Record<string, unknown>).phoneNumberId as string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const list = Array.isArray(nums) ? nums : [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const match = list.find((n: any) => n.assignedAgent?.agentId === AGENT_ID || n.assigned_agent?.agent_id === AGENT_ID);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (match) return (match as any).phoneNumberId || (match as any).phone_number_id;
   } catch { /* fall through */ }
   return RAW_PHONE_ID; // last resort: use whatever was configured
 }
