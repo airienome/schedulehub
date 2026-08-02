@@ -1,24 +1,5 @@
-"use client";
-
-import Link from "next/link";
-import { useEffect, useState } from "react";
 import { verifyPatientToken } from "@/lib/patient-token";
 import { PatientTimeline } from "./timeline";
-
-type Patient = { id: string; first_name: string; last_name: string; phone: string; preferred_language: string };
-
-type OutreachMsg = {
-  id: string; channel: string; direction: string; purpose: string;
-  body: string; sent_at: string; responded: boolean;
-  ai_extraction: Record<string, unknown> | null;
-};
-
-type Order = {
-  id: string; status: string; service_name: string; service_code: string;
-  provider_first: string; provider_last: string;
-  frequency_per_week: number; duration_weeks: number;
-  created_at: string;
-};
 
 export default async function PatientPage({
   searchParams,

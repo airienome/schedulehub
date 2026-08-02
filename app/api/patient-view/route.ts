@@ -14,6 +14,8 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "missing pid" }, { status: 400 });
   }
 
+  try {
+
   const [patientRows, orderRows, appointmentRows, messageRows] = await Promise.all([
     sql`
       select p.first_name, p.last_name, p.phone, p.address_line1, p.city, p.state, p.zip
@@ -58,4 +60,10 @@ export async function GET(req: Request) {
     appointments: appointmentRows,
     messages: messageRows,
   });
+
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("patient-view error:", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 }

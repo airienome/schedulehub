@@ -55,14 +55,20 @@ export function PatientTimeline({ patientId }: { patientId: string }) {
     return () => clearInterval(interval);
   }, [patientId]);
 
+  const [error, setError] = useState<string | null>(null);
+
   function loadData() {
-    fetch(`/api/patient-view?pid=${patientId}`).then(r => r.json()).then(data => {
+    fetch(`/api/patient-view?pid=${patientId}`).then(r => {
+      if (!r.ok) throw new Error(`API error: ${r.status}`);
+      return r.json();
+    }).then(data => {
+      if (data.error) { setError(data.error); setLoading(false); return; }
       if (data.patient) setPatient(data.patient);
       if (data.orders) setOrders(data.orders);
       if (data.appointments) setAppointments(data.appointments);
       if (data.messages) setMessages(data.messages);
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch(e => { setError(String(e)); setLoading(false); });
   }
 
   async function requestCall() {
@@ -120,6 +126,10 @@ export function PatientTimeline({ patientId }: { patientId: string }) {
 
   if (loading && !patient) {
     return (<main className="flex flex-1 items-center justify-center"><div className="text-warm-400">Loading your information...</div></main>);
+  }
+
+  if (error && !patient) {
+    return (<main className="flex flex-1 items-center justify-center p-8"><div className="text-center space-y-2"><div className="text-2xl">&#9888;</div><p className="text-warm-600 text-sm">Could not load your information.</p><p className="text-warm-400 text-xs">{error}</p><button onClick={() => { setError(null); setLoading(true); loadData(); }} className="mt-2 px-4 py-2 bg-sky text-warm-800 rounded-xl text-sm">Retry</button></div></main>);
   }
 
   const scheduledAppts = appointments.filter(a => ["scheduled", "confirmed"].includes(a.status) && new Date(a.scheduled_start) > new Date());
