@@ -207,8 +207,8 @@ export function PatientTimeline({ patientId }: { patientId: string }) {
                 <div className="flex gap-2">
                   <button onClick={() => startBooking(order.id)} className="px-4 py-2 bg-sky text-warm-800 rounded-xl text-sm font-semibold hover:bg-sky-dark transition-colors">Book Online</button>
                   {!callRequested ? (
-                    <button onClick={requestCall} disabled={requestingCall} className="px-4 py-2 border border-warm-300 rounded-xl text-sm text-warm-600 hover:bg-warm-50 transition-colors">{requestingCall ? "Requesting..." : "Request a Call"}</button>
-                  ) : <span className="text-xs text-olive-dark self-center">Call requested!</span>}
+                    <button onClick={requestCall} disabled={requestingCall} className="px-4 py-2 border border-warm-300 rounded-xl text-sm text-warm-600 hover:bg-warm-50 transition-colors">{requestingCall ? "Calling you now..." : "Call Me Now"}</button>
+                  ) : <span className="text-xs text-olive-dark self-center">Calling you now!</span>}
                 </div>
               </div>
             )}
