@@ -34,7 +34,7 @@ export default function AdminPage() {
   const [outreach, setOutreach] = useState<OutreachMsg[]>([]);
   const [activeTab, setActiveTab] = useState<"orders" | "outreach" | "links">("orders");
   const [loading, setLoading] = useState(true);
-  const [generatedLink, setGeneratedLink] = useState<{ url: string; patient: string } | null>(null);
+  const [generatedLink, setGeneratedLink] = useState<{ url: string; patient: string; expires_in: string } | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -145,7 +145,7 @@ export default function AdminPage() {
             </div>
           ))}
         </div>
-      ) : (
+      ) : activeTab === "outreach" ? (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
