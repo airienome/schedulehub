@@ -6,6 +6,7 @@ export async function GET() {
     select c.id, c.name, c.phone, c.email, c.address_line1, c.city, c.state, c.zip,
            c.offers_home_visits, c.home_visit_radius_km, c.scheduling_mode,
            c.ehr_system, c.onboarded, c.rating,
+           ST_Y(c.geom::geometry) as lat, ST_X(c.geom::geometry) as lng,
            array_agg(distinct st.name) filter (where st.name is not null) as services,
            array_agg(distinct st.code) filter (where st.code is not null) as service_codes,
            array_agg(distinct py.name) filter (where cnp.in_network) as in_network_payers,

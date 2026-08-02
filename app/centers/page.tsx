@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { CenterMap } from "./map";
 
 type Center = {
   id: string; name: string; phone: string; email: string;
@@ -12,6 +13,7 @@ type Center = {
   services: string[] | null; service_codes: string[] | null;
   in_network_payers: string[] | null;
   next_available: string | null; open_spots: number;
+  lat: number; lng: number;
 };
 
 const SPECIALTY_COLORS: Record<string, string> = {
@@ -29,6 +31,12 @@ export default function CentersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [activeFilters, setActiveFilters] = useState<Record<string, boolean>>({});
+  const [selectedCenterId, setSelectedCenterId] = useState<string | null>(null);
+
+  const handleMapSelect = useCallback((id: string) => {
+    setSelectedCenterId(id);
+    document.getElementById(`center-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, []);
 
   useEffect(() => {
     fetch("/api/centers").then(r => r.json()).then(d => {
@@ -116,7 +124,8 @@ export default function CentersPage() {
               {filtered.length === 0 ? (
                 <div className="text-center py-12 text-warm-400 text-sm">No clinics match your search.</div>
               ) : filtered.map(c => (
-                <div key={c.id} className="bg-white rounded-2xl border border-warm-200 shadow-sm p-5 space-y-3">
+                <div key={c.id} id={`center-${c.id}`} onClick={() => setSelectedCenterId(c.id)}
+                  className={`bg-white rounded-2xl border shadow-sm p-5 space-y-3 cursor-pointer transition-all ${selectedCenterId === c.id ? "border-pink ring-2 ring-pink/20" : "border-warm-200 hover:border-warm-300"}`}>
                   <div className="flex items-start justify-between">
                     <h3 className="font-semibold text-warm-900">{c.name}</h3>
                     <span className="text-sm text-warm-500">&#9733; {c.rating}</span>
@@ -180,14 +189,18 @@ export default function CentersPage() {
               ))}
             </div>
 
-            {/* Map placeholder */}
+            {/* Map */}
             <div className="lg:col-span-2 hidden lg:block">
-              <div className="sticky top-6 bg-warm-100 rounded-2xl border border-warm-200 h-80 flex items-center justify-center text-warm-400 text-sm">
-                <div className="text-center space-y-2">
-                  <div className="text-3xl">&#128506;</div>
-                  <p>Map view</p>
-                  <p className="text-xs text-warm-300">Miami-Dade County</p>
-                </div>
+              <div className="sticky top-6 h-[480px]">
+                <CenterMap
+                  centers={filtered.map(c => ({
+                    id: c.id, name: c.name, lat: c.lat, lng: c.lng,
+                    address: `${c.address_line1}, ${c.city}`,
+                    rating: c.rating, open_spots: c.open_spots,
+                  }))}
+                  selectedId={selectedCenterId}
+                  onSelect={handleMapSelect}
+                />
               </div>
             </div>
           </div>
