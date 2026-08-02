@@ -22,9 +22,9 @@ export default function Home() {
       <nav className="border-b border-warm-200 bg-white">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <span className="text-2xl font-bold tracking-tight text-warm-700">Schedule</span>
+            <span className="text-2xl font-bold tracking-tight text-warm-700">Therapy</span>
             <HeartIcon />
-            <span className="text-2xl font-bold tracking-tight text-pink">Hub</span>
+            <span className="text-2xl font-bold tracking-tight text-pink">Flow</span>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/login" className="text-sm font-semibold text-warm-600 hover:text-warm-900">
@@ -106,7 +106,7 @@ export default function Home() {
       <section id="how-it-works" className="py-20 px-6 bg-warm-50">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-warm-900">How ScheduleHub works</h2>
+            <h2 className="text-3xl font-bold text-warm-900">How TherapyFlow works</h2>
             <p className="text-warm-500 mt-3">Four steps. Zero apps for the patient.</p>
           </div>
 
@@ -220,11 +220,11 @@ export default function Home() {
         <div className="max-w-2xl mx-auto text-center space-y-6">
           <h2 className="text-3xl font-bold text-warm-900">Ready to close the referral gap?</h2>
           <p className="text-warm-500">
-            ScheduleHub connects the prescription to the first appointment
+            TherapyFlow connects the prescription to the first appointment
             without asking patients to do anything except answer the phone.
           </p>
           <div className="flex gap-4 justify-center">
-            <a href="mailto:hello@schedulehub.example"
+            <a href="mailto:hello@therapyflow305.example"
               className="px-7 py-3 bg-pink text-white rounded-full font-semibold hover:bg-pink-dark transition-colors">
               Contact Us
             </a>
@@ -240,7 +240,7 @@ export default function Home() {
       <footer className="border-t border-warm-200 bg-white py-8 px-6">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-warm-600">ScheduleHub</span>
+            <span className="text-sm font-semibold text-warm-600">TherapyFlow 305</span>
             <HeartIcon className="w-4 h-4" />
           </div>
           <div className="flex gap-6 text-sm text-warm-400">

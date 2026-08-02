@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ScheduleHub - App-less PT Appointment Scheduling",
+  title: "TherapyFlow 305 - App-less PT Appointment Scheduling",
   description: "Voice and SMS appointment scheduling and reminders for physical therapy referrals. No patient app required.",
 };
 

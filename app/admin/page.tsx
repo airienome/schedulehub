@@ -70,7 +70,7 @@ export default function AdminPage() {
     <main className="max-w-6xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <Link href="/" className="text-sm text-warm-400 hover:text-warm-600">&larr; ScheduleHub</Link>
+          <Link href="/" className="text-sm text-warm-400 hover:text-warm-600">&larr; TherapyFlow 305</Link>
           <h1 className="text-2xl font-bold mt-1 text-warm-900">Coordinator Dashboard</h1>
           <p className="text-sm text-warm-500">All orders and outreach activity across practices</p>
         </div>

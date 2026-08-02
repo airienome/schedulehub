@@ -144,14 +144,14 @@ export default function DoctorPage() {
       <nav className="border-b border-warm-200 bg-white">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold text-warm-700">Schedule</span>
+            <span className="text-xl font-bold text-warm-700">Therapy</span>
             <svg width="18" height="16" viewBox="0 0 24 22" fill="none">
               <defs><linearGradient id="hg" x1="0" y1="0" x2="24" y2="22" gradientUnits="userSpaceOnUse">
                 <stop offset="0" stopColor="#ab65ba" /><stop offset="0.5" stopColor="#b2cfee" /><stop offset="1" stopColor="#ee0d63" />
               </linearGradient></defs>
               <path d="M12 21C12 21 1 14.1 1 7.3C1 3.8 3.7 1.5 6.8 1.5C9 1.5 10.9 2.8 12 4.8C13.1 2.8 15 1.5 17.2 1.5C20.3 1.5 23 3.8 23 7.3C23 14.1 12 21 12 21Z" fill="url(#hg)" />
             </svg>
-            <span className="text-xl font-bold text-pink">Hub</span>
+            <span className="text-xl font-bold text-pink">Flow</span>
           </Link>
           <span className="text-sm text-warm-500">Dr. Maria Fernandez &middot; Gables Orthopedic Group</span>
         </div>

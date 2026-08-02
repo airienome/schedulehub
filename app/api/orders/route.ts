@@ -125,7 +125,7 @@ export async function POST(req: Request) {
     const smsBody =
       lang === "es"
         ? `Hola ${patient.first_name}, le escribimos de parte de ${providerName} en ${practiceName}. El doctor le ha referido para ${serviceName}. Podemos llamarle para coordinar sus citas? Responda SI para recibir la llamada.`
-        : `Hi ${patient.first_name}, this is ScheduleHub on behalf of ${providerName} at ${practiceName}. The doctor has referred you for ${serviceName}. Can we call you to schedule your appointments? Reply YES to receive a call.`;
+        : `Hi ${patient.first_name}, this is TherapyFlow on behalf of ${providerName} at ${practiceName}. The doctor has referred you for ${serviceName}. Can we call you to schedule your appointments? Reply YES to receive a call.`;
 
     // Update order status
     await sql`
