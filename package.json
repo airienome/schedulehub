@@ -1,0 +1,35 @@
+{
+  "name": "schedulehub",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "db:migrate": "tsx db/migrate.ts",
+    "db:seed": "tsx db/migrate.ts --seed",
+    "db:reset": "tsx db/migrate.ts --reset --seed",
+    "db:demo": "tsx db/migrate.ts --reset --demo"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.115.0",
+    "@elevenlabs/elevenlabs-js": "^2.60.0",
+    "@neondatabase/serverless": "^1.1.0",
+    "better-auth": "^1.6.25",
+    "next": "16.2.12",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "tsx": "^4.23.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.12",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
