@@ -245,6 +245,7 @@ export default function Home() {
           </div>
           <div className="flex gap-6 text-sm text-warm-400">
             <Link href="/login" className="hover:text-warm-600">Provider Login</Link>
+            <Link href="/centers" className="hover:text-warm-600">PT Centers</Link>
             <Link href="/admin" className="hover:text-warm-600">Staff Portal</Link>
           </div>
         </div>
