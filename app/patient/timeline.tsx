@@ -28,6 +28,7 @@ type CenterSlot = {
   id: string; name: string; address_line1: string; city: string; state: string; zip: string;
   phone: string; km: number; miles: number; offers_home_visits: boolean;
   rating: number; service_codes: string[] | null;
+  lat: number; lng: number;
   slots: { slot_id: string; start: string; end: string }[];
 };
 
@@ -220,15 +221,38 @@ export function PatientTimeline({ patientId }: { patientId: string }) {
                   <h3 className="font-bold text-warm-900">Find a physical therapist</h3>
                   <button onClick={() => setBookingOrderId(null)} className="text-xs text-warm-400 hover:text-warm-600">Cancel</button>
                 </div>
-                <p className="text-xs text-warm-500">In-network clinics near you, sorted by distance.</p>
+                <p className="text-xs text-warm-500">In-network clinics near you, sorted by distance. Tap a pin to jump to that clinic.</p>
+
+                {/* Map */}
+                {!loadingSlots && centerSlots.length > 0 && (() => {
+                  const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || "";
+                  const markers = centerSlots.filter(c => c.lat && c.lng).map((c, i) =>
+                    `markers=color:${selectedCenter?.id === c.id ? "red" : "0xB2CFEE"}%7Clabel:${i + 1}%7C${c.lat},${c.lng}`
+                  ).join("&");
+                  const center = centerSlots[0];
+                  const mapUrl = key
+                    ? `https://maps.googleapis.com/maps/api/staticmap?size=600x200&maptype=roadmap&${markers}&key=${key}`
+                    : null;
+                  return mapUrl ? (
+                    <img src={mapUrl} alt="Clinic locations" className="w-full h-40 object-cover rounded-xl border border-warm-200" />
+                  ) : (
+                    <div className="w-full h-32 bg-warm-100 rounded-xl border border-warm-200 flex items-center justify-center text-xs text-warm-400">
+                      <a href={`https://maps.google.com/maps?q=${center.lat},${center.lng}&z=12`} target="_blank" rel="noopener noreferrer" className="text-pink hover:text-pink-dark">Open map in Google Maps &#8599;</a>
+                    </div>
+                  );
+                })()}
 
                 {loadingSlots ? <p className="text-sm text-warm-400 text-center py-8">Finding clinics near you...</p>
                 : centerSlots.length === 0 ? <p className="text-sm text-warm-500 text-center py-8">No in-network clinics with open slots found. Request a call and we will help.</p>
-                : centerSlots.map(center => (
-                  <div key={center.id} className="bg-white rounded-2xl border border-warm-200 shadow-sm p-4 space-y-3">
+                : centerSlots.map((center, idx) => (
+                  <div key={center.id} id={`booking-center-${center.id}`}
+                    className={`bg-white rounded-2xl border shadow-sm p-4 space-y-3 ${selectedCenter?.id === center.id ? "border-pink ring-2 ring-pink/20" : "border-warm-200"}`}>
                     {/* Clinic header */}
                     <div className="flex items-start justify-between">
-                      <span className="font-semibold text-warm-900">{center.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-sky text-warm-800 text-xs font-bold flex items-center justify-center flex-shrink-0">{idx + 1}</span>
+                        <span className="font-semibold text-warm-900">{center.name}</span>
+                      </div>
                       <span className="text-sm text-warm-500">&#9733; {center.rating}</span>
                     </div>
 

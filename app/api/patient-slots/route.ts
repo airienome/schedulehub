@@ -18,6 +18,7 @@ export async function GET(req: Request) {
   const centers = await sql`
     select c.id, c.name, c.address_line1, c.city, c.state, c.zip, c.phone,
            c.offers_home_visits, c.rating,
+           ST_Y(c.geom::geometry) as lat, ST_X(c.geom::geometry) as lng,
            round((ST_Distance(c.geom, p.geom) / 1000.0)::numeric, 1) as km,
            round((ST_Distance(c.geom, p.geom) / 1609.0)::numeric, 1) as miles,
            array_agg(distinct st2.code) filter (where st2.code is not null) as service_codes
