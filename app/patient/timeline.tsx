@@ -124,6 +124,13 @@ export function PatientTimeline({ patientId }: { patientId: string }) {
   function fmtDate(d: string) { return new Date(d).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }); }
   function fmtTime(d: string) { return new Date(d).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }); }
 
+  // Timeout after 10s
+  useEffect(() => {
+    if (!loading) return;
+    const t = setTimeout(() => { if (!patient) setError("Timed out loading. Please try again."); setLoading(false); }, 10000);
+    return () => clearTimeout(t);
+  }, [loading, patient]);
+
   if (loading && !patient) {
     return (<main className="flex flex-1 items-center justify-center"><div className="text-warm-400">Loading your information...</div></main>);
   }
