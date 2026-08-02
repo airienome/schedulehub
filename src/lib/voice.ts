@@ -81,21 +81,23 @@ export async function callPatient(opts: {
   const toNumber = digits.length === 10 ? `+1${digits}` : digits.startsWith("1") ? `+${digits}` : `+${digits}`;
 
   // Place outbound call via ElevenLabs Conversational AI telephony
+  // Don't override first_message - use the agent's configured message with dynamic variables
   const result = await client.conversationalAi.twilio.outboundCall({
     agentId: AGENT_ID,
     agentPhoneNumberId: phoneNumId,
     toNumber,
     conversationInitiationClientData: {
-      conversationConfigOverride: {
-        agent: {
-          firstMessage: opts.firstMessage,
-          language: opts.language === "es" ? "es" : "en",
-        },
-      },
       dynamicVariables: {
         patient_phone: opts.phone,
         patient_id: opts.patientId,
+        patient_name: opts.dynamicVariables?.patient_name || "",
         order_id: opts.orderId,
+        doctor_name: opts.dynamicVariables?.doctor_name || "",
+        practice_name: opts.dynamicVariables?.practice_name || "",
+        service_type: opts.dynamicVariables?.service_type || "physical therapy",
+        frequency: opts.dynamicVariables?.frequency || "",
+        duration: opts.dynamicVariables?.duration || "",
+        language: opts.language || "en",
         ...opts.dynamicVariables,
       },
     },
