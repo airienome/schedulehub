@@ -25,7 +25,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "patient not found" }, { status: 404 });
   }
 
-  const url = buildPatientUrl(patient_id);
+  // Use the request origin so links work in both local dev and production
+  const origin = new URL(req.url).origin;
+  const url = buildPatientUrl(patient_id, origin);
 
   await auditLog("system", "patient_link_generated", "patients", patient_id, {
     phone: rows[0].phone,
